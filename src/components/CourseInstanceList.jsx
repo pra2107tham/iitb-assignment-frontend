@@ -18,7 +18,7 @@ function CourseInstanceList({ instances, onViewInstance, onDeleteInstance }) {
             <td className="p-2">{`${instance.year}-${instance.semester}`}</td>
             <td className="p-2">{instance.course.courseCode}</td>
             <td className="p-2 flex gap-2 justify-center">
-              <button onClick={() => onViewInstance(instance.id)} className="text-blue-500">
+              <button onClick={() => onViewInstance(instance.course.courseCode)} className="text-blue-500">
                 <i className="fas fa-search"></i>
               </button>
               <button onClick={() => onDeleteInstance(instance.id, instance.year, instance.semester)} className="text-red-500">

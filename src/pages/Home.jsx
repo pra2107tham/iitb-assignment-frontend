@@ -6,11 +6,14 @@ import CourseList from '../components/CourseList';
 import CourseInstanceFilter from '../components/CourseInstanceFilter';
 import CourseInstanceList from '../components/CourseInstanceList';
 import axios from 'axios';
+import Modal from '../components/Modal'; // Import the Modal component
 
 const Home = () => {
   const [courses, setCourses] = useState([]);
   const [instances, setInstances] = useState([]);
   const [filteredInstances, setFilteredInstances] = useState([]);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalContent, setModalContent] = useState('');
 
   const addCourse = async (course) => {
     try {
@@ -22,7 +25,7 @@ const Home = () => {
       console.error("Failed to add course", error);
     }
   };
-  
+
   const addInstance = async (instance) => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_API}/instances`, instance);
@@ -46,8 +49,7 @@ const Home = () => {
       console.error("Failed to delete course", error);
     }
   };
-  
-  
+
   const deleteInstance = async (instanceId, year, semester) => {
     try {
       await axios.delete(`${import.meta.env.VITE_API}/instances/${year}/${semester}/${instanceId}`);
@@ -63,42 +65,47 @@ const Home = () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API}/courses/${courseCode}`);
       toast.success('Course details fetched!');
-      alert(`Course details: ${JSON.stringify(response.data)}`);
+      setModalTitle('Course Details');
+      setModalContent(JSON.stringify(response.data, null, 2));
+      document.getElementById('details_modal').showModal();
     } catch (error) {
       toast.error('Failed to fetch course');
       console.error("Failed to fetch course", error);
     }
   };
-  
+
   const viewInstance = async (instanceId, year, semester) => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API}/instances/${year}/${semester}/${instanceId}`);
       toast.success('Instance details fetched!');
-      alert(`Instance details: ${JSON.stringify(response.data)}`);
+      setModalTitle('Instance Details');
+      setModalContent(JSON.stringify(response.data, null, 2));
+      document.getElementById('details_modal').showModal();
     } catch (error) {
       toast.error('Failed to fetch instance');
       console.error("Failed to fetch instance", error);
     }
   };
 
-  const filterInstances = (filter) => {
-    const { year, semester } = filter;
-    const filtered = instances.filter(instance => 
-      (!year || instance.year === year) && 
-      (!semester || instance.semester === semester)
-    );
-    setFilteredInstances(filtered);
+  const filterInstances = async (filter) => {
+    try {
+      const { year, semester } = filter;
+      // Fetch filtered instances
+      const response = await axios.get(`${import.meta.env.VITE_API}/instances/${year}/${semester}`);
+      setFilteredInstances(response.data); // Set filtered instances data
+    } catch (error) {
+      toast.error('Failed to fetch filtered instances');
+      console.error("Failed to fetch filtered instances", error);
+    }
   };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const allCourses = await axios.get(`${import.meta.env.VITE_API}/courses`);
-        console.log(allCourses.data);
         setCourses(allCourses.data);
 
         const allInstances = await axios.get(`${import.meta.env.VITE_API}/instances`);
-        console.log(allInstances.data);
         setInstances(allInstances.data);
         setFilteredInstances(allInstances.data);
         toast.success('Data fetched successfully!');
@@ -109,6 +116,10 @@ const Home = () => {
     };
     fetchData();
   }, []);
+
+  const closeModal = () => {
+    document.getElementById('details_modal').close();
+  };
 
   return (
     <div className='p-16 flex flex-col gap-8 justify-center'>
@@ -128,11 +139,14 @@ const Home = () => {
           <CourseInstanceFilter onFilter={filterInstances} />
           <CourseInstanceList
             instances={filteredInstances}
-            onViewInstance={viewInstance}
+            onViewInstance={viewCourse}
             onDeleteInstance={deleteInstance}
           />
         </div>
       </div>
+
+      {/* Modal component */}
+      <Modal title={modalTitle} content={modalContent} onClose={closeModal} />
     </div>
   );
 };
